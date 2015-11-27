@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>bundleid</key>
-	<string>fm.meyer.findemoji</string>
+	<string>fm.meyer.FindDatEmoji</string>
 	<key>category</key>
 	<string>Internet</string>
 	<key>connections</key>
@@ -23,11 +23,11 @@
 	<key>createdby</key>
 	<string>Carlos Galdino and Mike Meyer</string>
 	<key>description</key>
-	<string>Search emoji codes</string>
+	<string>A nicer alternative to the system emoji picker</string>
 	<key>disabled</key>
 	<false/>
 	<key>name</key>
-	<string>Emoji codes</string>
+	<string>Find Dat Emoji</string>
 	<key>objects</key>
 	<array>
 		<dict>
@@ -67,7 +67,7 @@
 				<key>script</key>
 				<string>ruby emoji.rb -x -u "{query}"</string>
 				<key>title</key>
-				<string>Search yr emoji</string>
+				<string>Search emoji…</string>
 				<key>type</key>
 				<integer>0</integer>
 				<key>withspace</key>
@@ -97,6 +97,6 @@
 		</dict>
 	</dict>
 	<key>webaddress</key>
-	<string>https://github.com/carlosgaldino/alfred-emoji-workflow</string>
+	<string>https://github.com/meyer/alfred-emoji-workflow</string>
 </dict>
 </plist>

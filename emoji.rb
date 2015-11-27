@@ -3,9 +3,6 @@
 require 'optparse'
 require 'json'
 
-require './emoji_symbols'
-require './related_words'
-
 def putv(*_); end
 
 OptionParser.new do |opts|
