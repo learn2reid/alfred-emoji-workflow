@@ -3,7 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>bundleid</key>
-	<string>carlosgaldino.emoji-codes</string>
+	<string>fm.meyer.findemoji</string>
+	<key>category</key>
+	<string>Internet</string>
 	<key>connections</key>
 	<dict>
 		<key>18314CAD-E0C0-45FD-A21E-69F5D30C7DE5</key>
@@ -17,20 +19,9 @@
 				<string></string>
 			</dict>
 		</array>
-		<key>48F47C79-01A7-4C1D-8239-1DAF1D54F7E6</key>
-		<array>
-			<dict>
-				<key>destinationuid</key>
-				<string>2404AE08-D4CF-4265-B7BB-44043DD356DD</string>
-				<key>modifiers</key>
-				<integer>0</integer>
-				<key>modifiersubtext</key>
-				<string></string>
-			</dict>
-		</array>
 	</dict>
 	<key>createdby</key>
-	<string>Carlos Galdino (@carlosgaldino)</string>
+	<string>Carlos Galdino and Mike Meyer</string>
 	<key>description</key>
 	<string>Search emoji codes</string>
 	<key>disabled</key>
@@ -39,41 +30,6 @@
 	<string>Emoji codes</string>
 	<key>objects</key>
 	<array>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>argumenttype</key>
-				<integer>1</integer>
-				<key>escaping</key>
-				<integer>36</integer>
-				<key>keyword</key>
-				<string>emoji</string>
-				<key>queuedelaycustom</key>
-				<integer>1</integer>
-				<key>queuedelayimmediatelyinitially</key>
-				<false/>
-				<key>queuedelaymode</key>
-				<integer>0</integer>
-				<key>queuemode</key>
-				<integer>1</integer>
-				<key>runningsubtext</key>
-				<string>Loading results...</string>
-				<key>script</key>
-				<string>ruby emoji.rb "{query}"</string>
-				<key>title</key>
-				<string>Search emoji codes</string>
-				<key>type</key>
-				<integer>0</integer>
-				<key>withspace</key>
-				<true/>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.input.scriptfilter</string>
-			<key>uid</key>
-			<string>48F47C79-01A7-4C1D-8239-1DAF1D54F7E6</string>
-			<key>version</key>
-			<integer>0</integer>
-		</dict>
 		<dict>
 			<key>config</key>
 			<dict>
@@ -97,7 +53,7 @@
 				<key>escaping</key>
 				<integer>36</integer>
 				<key>keyword</key>
-				<string>symoji</string>
+				<string>emoji</string>
 				<key>queuedelaycustom</key>
 				<integer>1</integer>
 				<key>queuedelayimmediatelyinitially</key>
@@ -107,11 +63,11 @@
 				<key>queuemode</key>
 				<integer>1</integer>
 				<key>runningsubtext</key>
-				<string>Loading results...</string>
+				<string>One moment please…</string>
 				<key>script</key>
-				<string>ruby emoji.rb "{query}" bla</string>
+				<string>ruby emoji.rb -x -u "{query}"</string>
 				<key>title</key>
-				<string>Search emoji symbols</string>
+				<string>Search yr emoji</string>
 				<key>type</key>
 				<integer>0</integer>
 				<key>withspace</key>
@@ -132,17 +88,12 @@
 		<key>18314CAD-E0C0-45FD-A21E-69F5D30C7DE5</key>
 		<dict>
 			<key>ypos</key>
-			<real>140</real>
+			<real>70</real>
 		</dict>
 		<key>2404AE08-D4CF-4265-B7BB-44043DD356DD</key>
 		<dict>
 			<key>ypos</key>
 			<real>70</real>
-		</dict>
-		<key>48F47C79-01A7-4C1D-8239-1DAF1D54F7E6</key>
-		<dict>
-			<key>ypos</key>
-			<real>10</real>
 		</dict>
 	</dict>
 	<key>webaddress</key>

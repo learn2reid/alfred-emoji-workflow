@@ -1,43 +1,109 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'json'
+
 require './emoji_symbols'
 require './related_words'
 
-def item_xml(options = {})
-  <<-ITEM
-  <item arg="#{options[:arg]}" uid="#{options[:uid]}">
-    <title>#{options[:title]}</title>
-    <subtitle>#{options[:subtitle]}</subtitle>
-    <icon>#{options[:path]}</icon>
+def putv(*_); end
+
+OptionParser.new do |opts|
+  opts.program_name = File.basename(__FILE__)
+  opts.summary_indent = "  "
+  opts.summary_width = 20
+
+  opts.on("-x", "--xml", "Output XML") do |o|
+    $output_xml = true
+  end
+
+  opts.on("-u", "--unicode", "Output XML") do |o|
+    $copy_unicode = true
+  end
+
+  opts.on("-v", "--verbose", "(Pretty self-explanatory)") do |o|
+    def putv(*args); STDERR.puts args.map {|a| "#{a}".console_grey}.join("\n") + "\n"; end
+  end
+end.parse!
+
+def items2xml(results)
+  results.map! do |r|
+    <<-ITEM
+  <item arg="#{r[:arg]}" uid="#{r[:uid]}">
+    <title>#{r[:title]}</title>
+    <subtitle>#{r[:subtitle]}</subtitle>
+    <icon>#{r[:path]}</icon>
   </item>
-  ITEM
+    ITEM
+  end
+
+  <<-XML
+<?xml version='1.0'?>
+<items>
+#{results.join}
+</items>
+  XML
 end
 
-def match?(word, query)
-  word.match(/#{query}/i)
+EMOJI_DB_PATH = File.expand_path('./emoji-db/')
+
+EMOJIS = File.open('./marshal-cache', File::RDWR|File::CREAT, 0644) do |f|
+  begin
+    guts = Marshal.load(f.read)
+    STDERR.puts "LOADING FROM MARSHALL"
+    guts
+  rescue
+    STDERR.puts "LOADING FROM EMOJI-DB"
+    fc = {
+      'search_strings' => {},
+      'db' => JSON.load(IO.read(File.join(EMOJI_DB_PATH, 'emoji-db.json')))
+    }
+
+    fc['db'].each do |k, v|
+      fc['search_strings'][k] = (v['name'].split(/\s+/) | v['keywords']).join(' ')
+      if fc['db'][k]['images']['apple']
+        fc['db'][k]['image'] = File.join(EMOJI_DB_PATH, fc['db'][k]['images']['apple'])
+      else
+        STDERR.puts "No image at db[#{k}][images][apple] :..("
+      end
+    end
+    f.rewind
+    f.write(Marshal.dump(fc))
+    f.flush
+    f.truncate(f.pos)
+    fc
+  end
 end
 
-images_path = File.expand_path('../images/emoji', __FILE__)
+### SEARCH SHIT
 
-query = Regexp.escape(ARGV.first).delete(':')
+query = Regexp.escape(ARGV.first)
+matches = []
 
-related_matches = RELATED_WORDS.select { |k, v| match?(k, query) || v.any? { |r| match?(r, query) } }
+EMOJIS['search_strings'].each do |key, ss|
+  if ss.match(/#{query}/)
+    matches.push key
+    STDERR.puts "#{EMOJIS['db'][key]['name']} is a match!"
+  end
+end
 
-# 1.8.7 returns a [['key', 'value']] instead of a Hash.
-related_matches = related_matches.respond_to?(:keys) ? related_matches.keys : related_matches.map(&:first)
+items = matches.map do |k|
+  emoji = EMOJIS['db'][k]
+  path = emoji['image']
 
-image_matches = Dir["#{images_path}/*.png"].map { |fn| File.basename(fn, '.png') }.select { |fn| match?(fn, query) }
+  emoji_arg = $copy_unicode ? emoji['code'] : emoji['name']
 
-matches = image_matches + related_matches
+  {
+    :arg => emoji_arg,
+    :uid => k,
+    :path => path,
+    :title => emoji['name'],
+    :subtitle => "Copy #{emoji_arg} to clipboard",
+  }
+end
 
-items = matches.uniq.sort.map do |elem|
-  path = File.join(images_path, "#{elem}.png")
-  emoji_code = ":#{elem}:"
-
-  emoji_arg = ARGV.size > 1 ? EMOJI_SYMBOLS.fetch(elem.to_sym, emoji_code) : emoji_code
-
-  item_xml({ :arg => emoji_arg, :uid => elem, :path => path, :title => emoji_code,
-             :subtitle => "Copy #{emoji_arg} to clipboard" })
-end.join
-
-output = "<?xml version='1.0'?>\n<items>\n#{items}</items>"
-
-puts output
+if $output_xml
+  puts items2xml(items)
+else
+  puts JSON.pretty_generate(items)
+end

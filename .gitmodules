@@ -1,0 +1,3 @@
+[submodule "emoji-db"]
+	path = emoji-db
+	url = git@github.com:meyer/emoji-db.git
