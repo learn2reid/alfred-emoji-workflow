@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require 'tmpdir'
 require 'optparse'
 require 'json'
 
@@ -14,14 +15,33 @@ OptionParser.new do |opts|
     $output_xml = true
   end
 
-  opts.on("-u", "--unicode", "Output XML") do |o|
-    $copy_unicode = true
+  opts.on("-r", "--ruby", "Copy as Ruby unicode string") do |o|
+    $copy_as_ruby = true
+  end
+
+  opts.on("-t", "--tone [1-6]", ['1','2','3','4','5','6'], "Include skin tone") do |t|
+    $skin_tone = [
+      "",
+      "\u{1f3fb}",
+      "\u{1f3fb}",
+      "\u{1f3fc}",
+      "\u{1f3fd}",
+      "\u{1f3fe}",
+      "\u{1f3ff}",
+    ][t.to_i]
+  end
+
+  opts.on("-d", "--debug", "Run in debug mode (no cache)") do |o|
+    STDERR.puts "Debug mode enabled"
+    $debug_mode = true
   end
 
   opts.on("-v", "--verbose", "(Pretty self-explanatory)") do |o|
     def putv(*args); STDERR.puts args.map {|a| "#{a}".console_grey}.join("\n") + "\n"; end
   end
 end.parse!
+
+$skin_tone ||= ''
 
 def items2xml(results)
   results.map! do |r|
@@ -44,10 +64,13 @@ end
 
 EMOJI_DB_PATH = File.expand_path('./emoji-db/')
 
-EMOJIS = File.open('./marshal-cache', File::RDWR|File::CREAT, 0644) do |f|
+MARSHAL_TMP_FILE = File.join(Dir.tmpdir, './alfred-emoji-marshal-cache')
+
+EMOJIS = File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) do |f|
   begin
+    raise if $debug_mode
     guts = Marshal.load(f.read)
-    STDERR.puts "LOADING FROM MARSHALL"
+    STDERR.puts "LOADING FROM MARSHAL"
     guts
   rescue
     STDERR.puts "LOADING FROM EMOJI-DB"
@@ -59,7 +82,7 @@ EMOJIS = File.open('./marshal-cache', File::RDWR|File::CREAT, 0644) do |f|
     fc['db'].each do |k, v|
       fc['search_strings'][k] = (v['name'].split(/\s+/) | v['keywords']).join(' ')
       if fc['db'][k]['images']['apple']
-        fc['db'][k]['image'] = File.join(EMOJI_DB_PATH, fc['db'][k]['images']['apple'])
+        fc['db'][k]['image'] = File.expand_path(fc['db'][k]['images']['apple'], EMOJI_DB_PATH)
       else
         STDERR.puts "No image at db[#{k}][images][apple] :..("
       end
@@ -74,13 +97,16 @@ end
 
 ### SEARCH SHIT
 
-query = Regexp.escape(ARGV.first)
 matches = []
 
-EMOJIS['search_strings'].each do |key, ss|
-  if ss.match(/#{query}/)
-    matches.push key
-    STDERR.puts "#{EMOJIS['db'][key]['name']} is a match!"
+unless ARGV.empty?
+  query = ARGV.map {|a| Regexp.escape(a)}.join('|')
+  STDERR.puts "QUERY: #{query}"
+  EMOJIS['search_strings'].each do |key, ss|
+    if ss.match(/#{query}/)
+      matches.push key
+      STDERR.puts "#{EMOJIS['db'][key]['name']} is a match!"
+    end
   end
 end
 
@@ -88,14 +114,20 @@ items = matches.map do |k|
   emoji = EMOJIS['db'][k]
   path = emoji['image']
 
-  emoji_arg = $copy_unicode ? emoji['code'] : emoji['name']
+  if $copy_as_ruby
+    # split multi
+    arg = k.split('_').map {|e| "\\u{#{e}}"}.join('')
+  else
+    # \uFE0F: emoji variation selector
+    arg = emoji['code'] + $skin_tone + "\uFE0F"
+  end
 
   {
-    :arg => emoji_arg,
+    :arg => arg,
     :uid => k,
     :path => path,
     :title => emoji['name'],
-    :subtitle => "Copy #{emoji_arg} to clipboard",
+    :subtitle => "Copy #{arg} to clipboard"
   }
 end
 

@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>bundleid</key>
-	<string>fm.meyer.FindDatEmoji</string>
+	<string>fm.meyer.FindDatEmojiDev</string>
 	<key>category</key>
 	<string>Internet</string>
 	<key>connections</key>
@@ -27,7 +27,7 @@
 	<key>disabled</key>
 	<false/>
 	<key>name</key>
-	<string>Find Dat Emoji</string>
+	<string>Find Dat Emoji DEV</string>
 	<key>objects</key>
 	<array>
 		<dict>
@@ -53,7 +53,7 @@
 				<key>escaping</key>
 				<integer>36</integer>
 				<key>keyword</key>
-				<string>emoji</string>
+				<string>testmoji</string>
 				<key>queuedelaycustom</key>
 				<integer>1</integer>
 				<key>queuedelayimmediatelyinitially</key>
@@ -65,7 +65,7 @@
 				<key>runningsubtext</key>
 				<string>One moment please…</string>
 				<key>script</key>
-				<string>ruby emoji.rb -x -u "{query}"</string>
+				<string>ruby emoji.rb -x {query}</string>
 				<key>title</key>
 				<string>Search emoji…</string>
 				<key>type</key>
@@ -82,7 +82,9 @@
 		</dict>
 	</array>
 	<key>readme</key>
-	<string></string>
+	<string>Emoji search for Alfred!
+- Adjust skin tone by adding -t1 through -t6 to your search query
+- Copy as Ruby by using -r</string>
 	<key>uidata</key>
 	<dict>
 		<key>18314CAD-E0C0-45FD-A21E-69F5D30C7DE5</key>
