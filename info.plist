@@ -8,7 +8,56 @@
 	<string>Internet</string>
 	<key>connections</key>
 	<dict>
+		<key>0C6C91FC-C9ED-4145-A992-8703287638FF</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>2404AE08-D4CF-4265-B7BB-44043DD356DD</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
+		</array>
 		<key>18314CAD-E0C0-45FD-A21E-69F5D30C7DE5</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>0C6C91FC-C9ED-4145-A992-8703287638FF</string>
+				<key>modifiers</key>
+				<integer>524288</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
+			<dict>
+				<key>destinationuid</key>
+				<string>D7398442-7E7D-4728-84FB-B55F1DB7F5C3</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
+			<dict>
+				<key>destinationuid</key>
+				<string>3580539C-16DC-4A45-A033-EA3E784FBFA4</string>
+				<key>modifiers</key>
+				<integer>131072</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
+		</array>
+		<key>3580539C-16DC-4A45-A033-EA3E784FBFA4</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>2404AE08-D4CF-4265-B7BB-44043DD356DD</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
+		</array>
+		<key>D7398442-7E7D-4728-84FB-B55F1DB7F5C3</key>
 		<array>
 			<dict>
 				<key>destinationuid</key>
@@ -30,6 +79,44 @@
 	<string>Find Dat Emoji DEV</string>
 	<key>objects</key>
 	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>4</integer>
+				<key>script</key>
+				<string>ruby emoji.rb --to-ruby "{query}"</string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>0C6C91FC-C9ED-4145-A992-8703287638FF</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>4</integer>
+				<key>script</key>
+				<string>ruby emoji.rb --to-emoji "{query}"</string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>D7398442-7E7D-4728-84FB-B55F1DB7F5C3</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
 		<dict>
 			<key>config</key>
 			<dict>
@@ -80,6 +167,25 @@
 			<key>version</key>
 			<integer>0</integer>
 		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>4</integer>
+				<key>script</key>
+				<string>ruby emoji.rb --to-name "{query}"</string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>3580539C-16DC-4A45-A033-EA3E784FBFA4</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
 	</array>
 	<key>readme</key>
 	<string>Emoji search for Alfred!
@@ -87,15 +193,30 @@
 - Copy as Ruby by using -r</string>
 	<key>uidata</key>
 	<dict>
+		<key>0C6C91FC-C9ED-4145-A992-8703287638FF</key>
+		<dict>
+			<key>ypos</key>
+			<real>50</real>
+		</dict>
 		<key>18314CAD-E0C0-45FD-A21E-69F5D30C7DE5</key>
 		<dict>
 			<key>ypos</key>
-			<real>70</real>
+			<real>160</real>
 		</dict>
 		<key>2404AE08-D4CF-4265-B7BB-44043DD356DD</key>
 		<dict>
 			<key>ypos</key>
-			<real>70</real>
+			<real>160</real>
+		</dict>
+		<key>3580539C-16DC-4A45-A033-EA3E784FBFA4</key>
+		<dict>
+			<key>ypos</key>
+			<real>270</real>
+		</dict>
+		<key>D7398442-7E7D-4728-84FB-B55F1DB7F5C3</key>
+		<dict>
+			<key>ypos</key>
+			<real>160</real>
 		</dict>
 	</dict>
 	<key>webaddress</key>
