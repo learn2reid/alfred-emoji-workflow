@@ -5,6 +5,8 @@ require 'tmpdir'
 require 'optparse'
 require 'json'
 
+SPLITTER = '|'
+
 def putv(*_); end
 
 def emoji_to_codepoints(uni)
@@ -27,18 +29,18 @@ OptionParser.new do |opts|
     $output_xml = true
   end
 
-  opts.on("--to-ruby [JSON object]", "Convert codepoints to ruby") do |cp|
-    print codepoints_to_ruby(JSON.parse(cp)['codepoints'])
+  opts.on("--to-ruby [string]", "Convert codepoints to ruby") do |cp|
+    print codepoints_to_ruby(cp.split(SPLITTER)[1..-1])
     abort
   end
 
-  opts.on("--to-unicode [JSON object]", "Convert codepoints to emoji") do |cp|
-    print codepoints_to_unicode(JSON.parse(cp)['codepoints'])
+  opts.on("--to-unicode [string]", "Convert codepoints to emoji") do |cp|
+    print codepoints_to_unicode(cp.split(SPLITTER)[1..-1])
     abort
   end
 
-  opts.on("--to-name [JSON object]", "Extract emojilib name from JSON object") do |cp|
-    print JSON.parse(cp)['emojilib']
+  opts.on("--to-name [string]", "Extract emojilib name from specially-formatted string") do |cp|
+    print cp.split(SPLITTER)[0]
     abort
   end
 
@@ -137,24 +139,22 @@ items = matches.map do |codepoint|
   emoji = EMOJIS['db'][codepoint]
   path = emoji['image']
 
-  d = {}
-
-  d[:codepoints] = [
+  codepoints = [
     *emoji_to_codepoints(emoji['code']),
     $skin_tone,
     "fe0f",
   ].compact
 
-  d[:emojilib] = emoji['emojilib_name'] ? ":#{emoji['emojilib_name']}:" : ''
+  emojilib_name = emoji['emojilib_name'] ? ":#{emoji['emojilib_name']}:" : ''
 
   {
-    :arg => JSON.generate(d),
+    :arg => "#{emojilib_name}#{SPLITTER}#{codepoints.join(SPLITTER)}",
     :uid => codepoint,
     :path => path,
     :title => emoji['name'],
-    :subtitle => "Copy #{codepoints_to_unicode(d[:codepoints])} to clipboard",
-    :subtitle_alt => "Copy #{codepoints_to_ruby(d[:codepoints])} to clipboard",
-    :subtitle_shift => emoji['emojilib_name'] ? "Copy #{d[:emojilib]} to clipboard" : "No emojilib name :..(",
+    :subtitle => "Copy #{codepoints_to_unicode(codepoints)} to clipboard",
+    :subtitle_alt => "Copy #{codepoints_to_ruby(codepoints)} to clipboard",
+    :subtitle_shift => emoji['emojilib_name'] ? "Copy #{emojilib_name} to clipboard" : "No emojilib name :..(",
   }
 end
 
