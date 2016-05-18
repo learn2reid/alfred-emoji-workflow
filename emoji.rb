@@ -19,10 +19,10 @@ def emoji_to_codepoints(uni)
   end
 end
 
-def codepoints_to_ruby(arr);  arr.map {|u| "\\u{#{u}}"}.join(''); end
+def codepoints_to_ruby(arr); arr.map {|u| "\\u{#{u}}"}.join(''); end
 def codepoints_to_unicode(arr); arr.map {|u| [u.hex].pack('U')}.join(''); end
 
-modified_argv = ARGV.first.shellsplit
+modified_argv = (ARGV.first || "").shellsplit
 STDERR.puts '===='
 STDERR.puts "ARGV: #{ARGV}"
 STDERR.puts "MODV: #{modified_argv}"
