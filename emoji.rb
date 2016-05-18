@@ -4,6 +4,8 @@
 require 'tmpdir'
 require 'optparse'
 require 'json'
+require 'cgi'
+require 'shellwords'
 
 SPLITTER = '|'
 
@@ -19,6 +21,12 @@ end
 
 def codepoints_to_ruby(arr);  arr.map {|u| "\\u{#{u}}"}.join(''); end
 def codepoints_to_unicode(arr); arr.map {|u| [u.hex].pack('U')}.join(''); end
+
+modified_argv = ARGV.first.shellsplit
+STDERR.puts '===='
+STDERR.puts "ARGV: #{ARGV}"
+STDERR.puts "MODV: #{modified_argv}"
+STDERR.puts '===='
 
 OptionParser.new do |opts|
   opts.program_name = File.basename(__FILE__)
@@ -64,12 +72,12 @@ OptionParser.new do |opts|
   opts.on("-v", "--verbose", "(Pretty self-explanatory)") do |o|
     def putv(*args); STDERR.puts args.map {|a| "#{a}".console_grey}.join("\n") + "\n"; end
   end
-end.parse!
+end.parse!(modified_argv)
 
 def items2xml(results)
   results.map! do |r|
     <<-ITEM
-  <item arg='#{r[:arg]}' uid="#{r[:uid]}">
+  <item arg="#{r[:arg]}" uid="#{r[:uid]}">
     <title>#{r[:title]}</title>
     <subtitle>#{r[:subtitle]}</subtitle>
     <subtitle mod="alt">#{r[:subtitle_alt]}</subtitle>
@@ -95,7 +103,7 @@ EMOJIS = File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) do |f|
   begin
     raise if $debug_mode
     guts = Marshal.load(f.read)
-    STDERR.puts "LOADING FROM MARSHAL"
+    STDERR.puts "LOADING FROM MARSHAL: #{MARSHAL_TMP_FILE}"
     guts
   rescue
     STDERR.puts "LOADING FROM EMOJI-DB"
@@ -105,7 +113,8 @@ EMOJIS = File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) do |f|
     }
 
     fc['db'].each do |k, v|
-      fc['search_strings'][k] = (v['name'].split(/\s+/) | v['keywords']).join(' ')
+      fc['db'][k]['name'] = CGI.escapeHTML(fc['db'][k]['name'] || '')
+      fc['search_strings'][k] = (v['name'].split(/\s+/) | v['keywords']).join(' ').downcase
       if fc['db'][k]['images']['apple']
         fc['db'][k]['image'] = File.expand_path(fc['db'][k]['images']['apple'], EMOJI_DB_PATH)
       else
@@ -124,8 +133,8 @@ end
 
 matches = []
 
-unless ARGV.empty?
-  query = ARGV.map {|a| Regexp.escape(a)}.join('|')
+unless modified_argv.empty?
+  query = modified_argv.delete_if {|a| a.match /\W/}.map {|a| Regexp.escape(a)}.join('|').downcase
   STDERR.puts "QUERY: #{query}"
   EMOJIS['search_strings'].each do |key, ss|
     if ss.match(/#{query}/)
@@ -136,11 +145,14 @@ unless ARGV.empty?
 end
 
 items = matches.map do |codepoint|
+  STDERR.puts "CODEPOINT: #{codepoint}"
   emoji = EMOJIS['db'][codepoint]
   path = emoji['image']
 
+  STDERR.puts "KEYWORDS: #{EMOJIS['search_strings'][codepoint]}"
+
   codepoints = [
-    *emoji_to_codepoints(emoji['code']),
+    *emoji['codepoints'],
     $skin_tone,
     "fe0f",
   ].compact
