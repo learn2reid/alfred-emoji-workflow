@@ -6,21 +6,14 @@ require 'optparse'
 require 'json'
 require 'cgi'
 require 'shellwords'
+require './emoji-db/utils.rb'
 
 SPLITTER = '|'
 
 def putv(*_); end
 
-def emoji_to_codepoints(uni)
-  uni.chars.map do |c|
-    "%04x" % c.unpack('U')[0]
-  end.delete_if do |c|
-    c === 'fe0f'
-  end
-end
-
-def codepoints_to_ruby(arr); arr.map {|u| "\\u{#{u}}"}.join(''); end
-def codepoints_to_unicode(arr); arr.map {|u| [u.hex].pack('U')}.join(''); end
+def codepoints_to_ruby(arr); arr.int_to_unicode.map {|d| "\\u{#{d}}"}.join(''); end
+def codepoints_to_unicode(arr); arr.pack('U*'); end
 
 modified_argv = (ARGV.first || "").shellsplit
 STDERR.puts '===='
@@ -52,16 +45,8 @@ OptionParser.new do |opts|
     abort
   end
 
-  opts.on("-t", "--tone [1-6]", ['1','2','3','4','5','6'], "Include skin tone") do |t|
-    $skin_tone = [
-      nil,
-      "1f3fb",
-      "1f3fb",
-      "1f3fc",
-      "1f3fd",
-      "1f3fe",
-      "1f3ff",
-    ][t.to_i]
+  opts.on("-t", "--tone [1-5]", ['1','2','3','4','5'], "Include skin tone") do |t|
+    $skin_tone = t.to_i
   end
 
   opts.on("-d", "--debug", "Run in debug mode (no cache)") do |o|
@@ -115,10 +100,11 @@ EMOJIS = File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) do |f|
     fc['db'].each do |k, v|
       fc['db'][k]['name'] = CGI.escapeHTML(fc['db'][k]['name'] || '')
       fc['search_strings'][k] = (v['name'].split(/\s+/) | v['keywords']).join(' ').downcase
-      if fc['db'][k]['images']['apple']
-        fc['db'][k]['image'] = File.expand_path(fc['db'][k]['images']['apple'], EMOJI_DB_PATH)
-      else
-        STDERR.puts "No image at db[#{k}][images][apple] :..("
+      fc['db'][k]['image'] = File.expand_path(fc['db'][k]['image'], EMOJI_DB_PATH)
+      if fc['db'][k]['fitz']
+        fc['db'][k]['fitz'].map! do |p|
+          p && File.expand_path(p, EMOJI_DB_PATH) || p
+        end
       end
     end
     f.rewind
@@ -147,14 +133,31 @@ end
 items = matches.map do |codepoint|
   STDERR.puts "CODEPOINT: #{codepoint}"
   emoji = EMOJIS['db'][codepoint]
+
   path = emoji['image']
+  codepoints = [emoji['codepoints']]
+
+  fitz = if $skin_tone && emoji['fitz']
+    [
+      nil,
+      0x1f3fb,
+      0x1f3fc,
+      0x1f3fd,
+      0x1f3fe,
+      0x1f3ff,
+    ][$skin_tone]
+  end
+
+  path = emoji['fitz'][$skin_tone - 1] if fitz
+
+  STDERR.puts path
 
   STDERR.puts "KEYWORDS: #{EMOJIS['search_strings'][codepoint]}"
 
   codepoints = [
     *emoji['codepoints'],
-    $skin_tone,
-    "fe0f",
+    fitz,
+    0xfe0f,
   ].compact
 
   emojilib_name = emoji['emojilib_name'] ? ":#{emoji['emojilib_name']}:" : ''

@@ -36,11 +36,11 @@ task :default do
     )
   end
 
-  Dir.chdir RSYNC_DEST
-  system(
-    'zip',
-    '-r9',
-    File.expand_path('./package/emoji-codes.alfredworkflow', RSYNC_SRC),
-    '.'
-  )
+  # Dir.chdir RSYNC_DEST
+  # system(
+  #   'zip',
+  #   '-r9',
+  #   File.expand_path('./package/emoji-codes.alfredworkflow', RSYNC_SRC),
+  #   '.'
+  # )
 end
