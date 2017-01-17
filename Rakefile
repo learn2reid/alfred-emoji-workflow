@@ -1,31 +1,33 @@
-require 'tmpdir'
+require 'pathname'
+require 'shellwords'
+
+RootDir = Pathname.new(Rake.application.original_dir)
+DestDir = Pathname.new(Rake.application.original_dir + '-pristine')
+BuildDir = RootDir.join('build')
 
 desc 'Copy necessary files to new bundle'
 task :default do
-  RSYNC_SRC = Dir.pwd
-  RSYNC_DEST = "#{RSYNC_SRC}-pristine"
-
-  FileUtils.rm_rf RSYNC_DEST
-  FileUtils.mkdir_p RSYNC_DEST
+  rm_rf DestDir
+  mkdir_p DestDir
+  rm_rf BuildDir
+  mkdir_p BuildDir
 
   [
-    'README.md',
     'emoji.rb',
     'icon.png',
     'emoji-db/emoji-db.json',
     'emoji-db/emoji-img/',
     'emoji-db/utils.rb',
   ].each do |f|
-    Dir.chdir RSYNC_DEST
     dir_name = File.dirname(f)
-
-    FileUtils.mkdir_p(dir_name) if dir_name != '.'
-    FileUtils.cp_r File.expand_path(f, RSYNC_SRC), dir_name
+    mkdir_p(DestDir.join dir_name) if dir_name != '.'
+    cp_r RootDir.join(f), DestDir.join(f)
   end
 
-  plist_guts = IO.read(File.expand_path('info.plist', RSYNC_SRC))
-  File.open(File.expand_path('info.plist', RSYNC_DEST), File::RDWR|File::CREAT, 0644) do |f|
-    f.write plist_guts.gsub(
+  plist_contents = File.read(RootDir.join('info.plist'))
+
+  File.open(DestDir.join('info.plist'), 'w', 0644) do |f|
+    f.write plist_contents.gsub(
       'Find Dat Emoji DEV',
       'Find Dat Emoji'
     ).gsub(
@@ -37,11 +39,11 @@ task :default do
     )
   end
 
-  # Dir.chdir RSYNC_DEST
-  # system(
-  #   'zip',
-  #   '-r9',
-  #   File.expand_path('./package/emoji-codes.alfredworkflow', RSYNC_SRC),
-  #   '.'
-  # )
+  chdir DestDir
+  system(
+    'zip',
+    '-r9',
+    BuildDir.join('find-emoji.alfredworkflow').to_s,
+    '.'
+  )
 end
