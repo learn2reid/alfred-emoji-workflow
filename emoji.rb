@@ -7,18 +7,17 @@ require 'json'
 require 'cgi'
 require 'shellwords'
 require './emoji-db/utils.rb'
+require 'pathname'
 
 SPLITTER = '|'
 
 def putv(*_); end
 
 def codepoints_to_ruby(arr); arr.int_to_unicode.map {|d| "\\u{#{d}}"}.join(''); end
-def codepoints_to_unicode(arr); arr.pack('U*'); end
+def codepoints_to_unicode(arr); arr.map(&:to_i).pack('U*'); end
 
-modified_argv = (ARGV.first || "").shellsplit
 STDERR.puts '===='
 STDERR.puts "ARGV: #{ARGV}"
-STDERR.puts "MODV: #{modified_argv}"
 STDERR.puts '===='
 
 OptionParser.new do |opts|
@@ -31,12 +30,18 @@ OptionParser.new do |opts|
   end
 
   opts.on("--to-ruby [string]", "Convert codepoints to ruby") do |cp|
-    print codepoints_to_ruby(cp.split(SPLITTER)[1..-1])
+    print codepoints_to_ruby(cp.split(SPLITTER)[2..-1])
     abort
   end
 
   opts.on("--to-unicode [string]", "Convert codepoints to emoji") do |cp|
-    print codepoints_to_unicode(cp.split(SPLITTER)[1..-1])
+    print codepoints_to_unicode(cp.split(SPLITTER)[2..-1])
+    abort
+  end
+
+  opts.on("--to-path [string]", "Print path to emoji image") do |cp|
+    print cp.split(SPLITTER)[1]
+    STDERR.puts cp.split(SPLITTER)[1]
     abort
   end
 
@@ -57,16 +62,19 @@ OptionParser.new do |opts|
   opts.on("-v", "--verbose", "(Pretty self-explanatory)") do |o|
     def putv(*args); STDERR.puts args.map {|a| "#{a}".console_grey}.join("\n") + "\n"; end
   end
-end.parse!(modified_argv)
+end.parse!(ARGV)
 
 def items2xml(results)
-  results.map! do |r|
+  bits = results.map do |r|
     <<-ITEM
-  <item arg="#{r[:arg]}" uid="#{r[:uid]}">
+  <item
+    arg="#{r[:arg]}"
+    uid="#{r[:uid]}">
     <title>#{r[:title]}</title>
     <subtitle>#{r[:subtitle]}</subtitle>
     <subtitle mod="alt">#{r[:subtitle_alt]}</subtitle>
     <subtitle mod="shift">#{r[:subtitle_shift]}</subtitle>
+    <subtitle mod="cmd">#{r[:subtitle_cmd]}</subtitle>
     <icon>#{r[:path]}</icon>
   </item>
     ITEM
@@ -75,13 +83,12 @@ def items2xml(results)
   <<-XML
 <?xml version='1.0'?>
 <items>
-#{results.join}
+#{bits.join("\n")}
 </items>
   XML
 end
 
-EMOJI_DB_PATH = File.expand_path('./emoji-db/')
-
+EMOJI_DB_PATH = Pathname.new('./emoji-db/')
 MARSHAL_TMP_FILE = File.expand_path('./alfred-emoji-marshal-cache', Dir.tmpdir)
 
 EMOJIS = File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) do |f|
@@ -94,17 +101,15 @@ EMOJIS = File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) do |f|
     STDERR.puts "LOADING FROM EMOJI-DB"
     fc = {
       'search_strings' => {},
-      'db' => JSON.load(IO.read(File.expand_path('emoji-db.json', EMOJI_DB_PATH)))
+      'db' => JSON.load(IO.read(EMOJI_DB_PATH.join('emoji-db.json')))
     }
 
     fc['db'].each do |k, v|
       fc['db'][k]['name'] = CGI.escapeHTML(fc['db'][k]['name'] || '')
       fc['search_strings'][k] = (v['name'].split(/\s+/) | v['keywords']).join(' ').downcase
-      fc['db'][k]['image'] = File.expand_path(fc['db'][k]['image'], EMOJI_DB_PATH)
+      fc['db'][k]['image'] = EMOJI_DB_PATH.join(fc['db'][k]['image'])
       if fc['db'][k]['fitz']
-        fc['db'][k]['fitz'].map! do |p|
-          p && File.expand_path(p, EMOJI_DB_PATH) || p
-        end
+        fc['db'][k]['fitz'].map! {|p| EMOJI_DB_PATH.join(p)}
       end
     end
     f.rewind
@@ -119,8 +124,8 @@ end
 
 matches = []
 
-unless modified_argv.empty?
-  query = modified_argv.delete_if {|a| a.match /\W/}.map {|a| Regexp.escape(a)}.join('|').downcase
+unless ARGV.empty?
+  query = ARGV.delete_if {|a| a.match /\W/}.map {|a| Regexp.escape(a)}.join('|').downcase
   STDERR.puts "QUERY: #{query}"
   EMOJIS['search_strings'].each do |key, ss|
     if ss.match(/#{query}/)
@@ -150,9 +155,8 @@ items = matches.map do |codepoint|
 
   path = emoji['fitz'][$skin_tone - 1] if fitz
 
-  STDERR.puts path
-
   STDERR.puts "KEYWORDS: #{EMOJIS['search_strings'][codepoint]}"
+  STDERR.puts path
 
   codepoints = [
     *emoji['codepoints'],
@@ -162,18 +166,26 @@ items = matches.map do |codepoint|
 
   emojilib_name = emoji['emojilib_name'] ? ":#{emoji['emojilib_name']}:" : ''
 
+  title = if emoji['name'] && emoji['name'].strip != ''
+    emoji['name']
+  else
+    emoji['emojilib_name'] || '[NO NAME]'
+  end
+
   {
-    :arg => "#{emojilib_name}#{SPLITTER}#{codepoints.join(SPLITTER)}",
+    :arg => "#{emojilib_name}#{SPLITTER}#{path}#{SPLITTER}#{codepoints.join(SPLITTER)}",
     :uid => codepoint,
     :path => path,
-    :title => emoji['name'],
+    :title => title,
     :subtitle => "Copy #{codepoints_to_unicode(codepoints)} to clipboard",
     :subtitle_alt => "Copy #{codepoints_to_ruby(codepoints)} to clipboard",
     :subtitle_shift => emoji['emojilib_name'] ? "Copy #{emojilib_name} to clipboard" : "No emojilib name :..(",
+    :subtitle_cmd => "Reveal image for #{codepoints_to_unicode(codepoints)} in Finder",
   }
 end
 
 if $output_xml
+  STDERR.puts items2xml(items)
   puts items2xml(items)
 else
   puts JSON.pretty_generate(items)

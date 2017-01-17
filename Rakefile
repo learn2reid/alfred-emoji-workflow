@@ -5,7 +5,7 @@ task :default do
   RSYNC_SRC = Dir.pwd
   RSYNC_DEST = "#{RSYNC_SRC}-pristine"
 
-  # FileUtils.rm_rf RSYNC_DEST
+  FileUtils.rm_rf RSYNC_DEST
   FileUtils.mkdir_p RSYNC_DEST
 
   [
@@ -14,6 +14,7 @@ task :default do
     'icon.png',
     'emoji-db/emoji-db.json',
     'emoji-db/emoji-img/',
+    'emoji-db/utils.rb',
   ].each do |f|
     Dir.chdir RSYNC_DEST
     dir_name = File.dirname(f)
