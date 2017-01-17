@@ -13,7 +13,7 @@ SPLITTER = '|'
 
 def putv(*_); end
 
-def codepoints_to_ruby(arr); arr.int_to_unicode.map {|d| "\\u{#{d}}"}.join(''); end
+def codepoints_to_ruby(arr); arr.map(&:to_i).int_to_unicode.map {|d| "\\u{#{d}}"}.join(''); end
 def codepoints_to_unicode(arr); arr.map(&:to_i).pack('U*'); end
 
 STDERR.puts '===='
@@ -161,7 +161,6 @@ items = matches.map do |codepoint|
   codepoints = [
     *emoji['codepoints'],
     fitz,
-    0xfe0f,
   ].compact
 
   emojilib_name = emoji['emojilib_name'] ? ":#{emoji['emojilib_name']}:" : ''
@@ -169,7 +168,7 @@ items = matches.map do |codepoint|
   title = if emoji['name'] && emoji['name'].strip != ''
     emoji['name']
   else
-    emoji['emojilib_name'] || '[NO NAME]'
+    "NO NAME FOR EMOJI #{codepoint}"
   end
 
   {
