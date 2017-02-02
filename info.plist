@@ -176,7 +176,7 @@
 				<key>argumenttype</key>
 				<integer>0</integer>
 				<key>escaping</key>
-				<integer>100</integer>
+				<integer>126</integer>
 				<key>keyword</key>
 				<string>testmoji</string>
 				<key>queuedelaycustom</key>

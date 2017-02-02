@@ -17,7 +17,7 @@ def codepoints_to_ruby(arr); arr.map(&:to_i).int_to_hex.map {|d| "\\u{#{d}}"}.jo
 def codepoints_to_emoji(arr); arr.map(&:to_i).pack('U*'); end
 
 STDERR.puts '===='
-STDERR.puts "ARGV: #{ARGV}"
+STDERR.puts "ARGV: `#{ARGV}`"
 STDERR.puts '===='
 
 OptionParser.new do |opts|
@@ -102,7 +102,7 @@ EMOJIS = File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) do |f|
   begin
     raise if $debug_mode
     guts = Marshal.load(f.read)
-    STDERR.puts "LOADING FROM MARSHAL: #{MARSHAL_TMP_FILE}"
+    STDERR.puts "LOADING FROM MARSHAL: `#{MARSHAL_TMP_FILE}`"
     guts
   rescue
     STDERR.puts "LOADING FROM EMOJI-DB"
@@ -114,10 +114,12 @@ EMOJIS = File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) do |f|
     fc['db'].each do |k, v|
       fc['db'][k]['name'] = CGI.escapeHTML(fc['db'][k]['name'] || '')
       fc['search_strings'][k] = [
+        '',
         v['name'].split(/\s+/),
         v['keywords'],
         v['codepoints'].map(&:to_unicode),
         fc['db'][k]['fitz'] ? 'fitz' : [],
+        '',
       ].compact.join(' ').downcase
       fc['db'][k]['image'] = EMOJI_DB_PATH.join(fc['db'][k]['image'])
       if fc['db'][k]['fitz']
@@ -134,14 +136,18 @@ end
 
 ### SEARCH SHIT
 
+exact_matches = []
 matches = []
 
 unless ARGV.empty?
-  query = ARGV.join(' ').downcase
-  STDERR.puts "QUERY: #{query}"
+  query = ARGV.join(' ').downcase.strip
+  STDERR.puts "QUERY: `#{query}`"
   if query.strip != ''
     EMOJIS['search_strings'].each do |key, ss|
-      if ss.include?(query)
+      if ss.include?(" #{query} ")
+        exact_matches.push key
+        STDERR.puts "`#{EMOJIS['db'][key]['name']}` is an exact match!"
+      elsif ss.include?(query)
         matches.push key
         STDERR.puts "`#{EMOJIS['db'][key]['name']}` is a match!"
       end
@@ -149,8 +155,8 @@ unless ARGV.empty?
   end
 end
 
-items = matches.map do |emojilib_key|
-  STDERR.puts "CODEPOINT: #{emojilib_key}"
+items = (exact_matches + matches).map do |emojilib_key|
+  STDERR.puts "CODEPOINT: `#{emojilib_key}`"
   emoji = EMOJIS['db'][emojilib_key]
 
   path = emoji['image']
@@ -169,7 +175,7 @@ items = matches.map do |emojilib_key|
 
   path = emoji['fitz'][$skin_tone - 1] if fitz
 
-  STDERR.puts "KEYWORDS: #{EMOJIS['search_strings'][emojilib_key]}"
+  STDERR.puts "KEYWORDS: `#{EMOJIS['search_strings'][emojilib_key]}`"
   STDERR.puts path
 
   codepoints = [
