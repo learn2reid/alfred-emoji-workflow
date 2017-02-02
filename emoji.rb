@@ -13,8 +13,8 @@ SPLITTER = '|'
 
 def putv(*_); end
 
-def codepoints_to_ruby(arr); arr.map(&:to_i).int_to_unicode.map {|d| "\\u{#{d}}"}.join(''); end
-def codepoints_to_unicode(arr); arr.map(&:to_i).pack('U*'); end
+def codepoints_to_ruby(arr); arr.map(&:to_i).int_to_hex.map {|d| "\\u{#{d}}"}.join(''); end
+def codepoints_to_emoji(arr); arr.map(&:to_i).pack('U*'); end
 
 STDERR.puts '===='
 STDERR.puts "ARGV: #{ARGV}"
@@ -29,24 +29,30 @@ OptionParser.new do |opts|
     $output_xml = true
   end
 
-  opts.on("--to-ruby [string]", "Convert codepoints to ruby") do |cp|
-    print codepoints_to_ruby(cp.split(SPLITTER)[2..-1])
+  opts.on("--to-name [string]", "Extract emojilib name from specially-formatted string") do |cp|
+    print cp.split(SPLITTER)[0]
     abort
   end
 
-  opts.on("--to-unicode [string]", "Convert codepoints to emoji") do |cp|
-    print codepoints_to_unicode(cp.split(SPLITTER)[2..-1])
-    abort
-  end
-
-  opts.on("--to-path [string]", "Print path to emoji image") do |cp|
+  opts.on("--to-key [string]", "Print emoji-db key") do |cp|
     print cp.split(SPLITTER)[1]
     STDERR.puts cp.split(SPLITTER)[1]
     abort
   end
 
-  opts.on("--to-name [string]", "Extract emojilib name from specially-formatted string") do |cp|
-    print cp.split(SPLITTER)[0]
+  opts.on("--to-path [string]", "Print path to emoji image") do |cp|
+    print cp.split(SPLITTER)[2]
+    STDERR.puts cp.split(SPLITTER)[2]
+    abort
+  end
+
+  opts.on("--to-unicode [string]", "Convert codepoints to emoji") do |cp|
+    print codepoints_to_emoji(cp.split(SPLITTER)[3..-1])
+    abort
+  end
+
+  opts.on("--to-ruby [string]", "Convert codepoints to ruby") do |cp|
+    print codepoints_to_ruby(cp.split(SPLITTER)[3..-1])
     abort
   end
 
@@ -73,6 +79,7 @@ def items2xml(results)
     <title>#{r[:title]}</title>
     <subtitle>#{r[:subtitle]}</subtitle>
     <subtitle mod="alt">#{r[:subtitle_alt]}</subtitle>
+    <subtitle mod="ctrl">#{r[:subtitle_ctrl]}</subtitle>
     <subtitle mod="shift">#{r[:subtitle_shift]}</subtitle>
     <subtitle mod="cmd">#{r[:subtitle_cmd]}</subtitle>
     <icon>#{r[:path]}</icon>
@@ -106,7 +113,12 @@ EMOJIS = File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) do |f|
 
     fc['db'].each do |k, v|
       fc['db'][k]['name'] = CGI.escapeHTML(fc['db'][k]['name'] || '')
-      fc['search_strings'][k] = (v['name'].split(/\s+/) | v['keywords']).join(' ').downcase
+      fc['search_strings'][k] = [
+        v['name'].split(/\s+/),
+        v['keywords'],
+        v['codepoints'].map(&:to_unicode),
+        fc['db'][k]['fitz'] ? 'fitz' : [],
+      ].compact.join(' ').downcase
       fc['db'][k]['image'] = EMOJI_DB_PATH.join(fc['db'][k]['image'])
       if fc['db'][k]['fitz']
         fc['db'][k]['fitz'].map! {|p| EMOJI_DB_PATH.join(p)}
@@ -125,19 +137,21 @@ end
 matches = []
 
 unless ARGV.empty?
-  query = ARGV.delete_if {|a| a.match /\W/}.map {|a| Regexp.escape(a)}.join('|').downcase
+  query = ARGV.join(' ').downcase
   STDERR.puts "QUERY: #{query}"
-  EMOJIS['search_strings'].each do |key, ss|
-    if ss.match(/#{query}/)
-      matches.push key
-      STDERR.puts "#{EMOJIS['db'][key]['name']} is a match!"
+  if query.strip != ''
+    EMOJIS['search_strings'].each do |key, ss|
+      if ss.include?(query)
+        matches.push key
+        STDERR.puts "`#{EMOJIS['db'][key]['name']}` is a match!"
+      end
     end
   end
 end
 
-items = matches.map do |codepoint|
-  STDERR.puts "CODEPOINT: #{codepoint}"
-  emoji = EMOJIS['db'][codepoint]
+items = matches.map do |emojilib_key|
+  STDERR.puts "CODEPOINT: #{emojilib_key}"
+  emoji = EMOJIS['db'][emojilib_key]
 
   path = emoji['image']
   codepoints = [emoji['codepoints']]
@@ -155,7 +169,7 @@ items = matches.map do |codepoint|
 
   path = emoji['fitz'][$skin_tone - 1] if fitz
 
-  STDERR.puts "KEYWORDS: #{EMOJIS['search_strings'][codepoint]}"
+  STDERR.puts "KEYWORDS: #{EMOJIS['search_strings'][emojilib_key]}"
   STDERR.puts path
 
   codepoints = [
@@ -168,18 +182,19 @@ items = matches.map do |codepoint|
   title = if emoji['name'] && emoji['name'].strip != ''
     emoji['name']
   else
-    "NO NAME FOR EMOJI #{codepoint}"
+    "NO NAME FOR EMOJI #{emojilib_key}"
   end
 
   {
-    :arg => "#{emojilib_name}#{SPLITTER}#{path}#{SPLITTER}#{codepoints.join(SPLITTER)}",
-    :uid => codepoint,
+    :arg => "#{emojilib_name}#{SPLITTER}#{emojilib_key}#{SPLITTER}#{path}#{SPLITTER}#{codepoints.join(SPLITTER)}",
+    :uid => emojilib_key,
     :path => path,
     :title => title,
-    :subtitle => "Copy #{codepoints_to_unicode(codepoints)} to clipboard",
+    :subtitle => "Copy #{codepoints_to_emoji(codepoints)} to clipboard",
     :subtitle_alt => "Copy #{codepoints_to_ruby(codepoints)} to clipboard",
+    :subtitle_ctrl => "Copy #{emojilib_key} to clipboard",
     :subtitle_shift => emoji['emojilib_name'] ? "Copy #{emojilib_name} to clipboard" : "No emojilib name :..(",
-    :subtitle_cmd => "Reveal image for #{codepoints_to_unicode(codepoints)} in Finder",
+    :subtitle_cmd => "Reveal image for #{codepoints_to_emoji(codepoints)} in Finder",
   }
 end
 

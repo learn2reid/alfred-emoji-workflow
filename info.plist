@@ -63,8 +63,31 @@
 				<key>vitoclose</key>
 				<false/>
 			</dict>
+			<dict>
+				<key>destinationuid</key>
+				<string>BB9DC8E1-82F4-424B-8018-E8E238BC349B</string>
+				<key>modifiers</key>
+				<integer>262144</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
 		</array>
 		<key>3580539C-16DC-4A45-A033-EA3E784FBFA4</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>2404AE08-D4CF-4265-B7BB-44043DD356DD</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>BB9DC8E1-82F4-424B-8018-E8E238BC349B</key>
 		<array>
 			<dict>
 				<key>destinationuid</key>
@@ -274,6 +297,29 @@
 			<key>version</key>
 			<integer>2</integer>
 		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>4</integer>
+				<key>script</key>
+				<string>ruby emoji.rb --to-key "{query}"</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>BB9DC8E1-82F4-424B-8018-E8E238BC349B</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
 	</array>
 	<key>readme</key>
 	<string>Emoji search for Alfred!
@@ -284,7 +330,7 @@
 		<key>0C6C91FC-C9ED-4145-A992-8703287638FF</key>
 		<dict>
 			<key>colorindex</key>
-			<integer>2</integer>
+			<integer>5</integer>
 			<key>xpos</key>
 			<integer>230</integer>
 			<key>ypos</key>
@@ -302,7 +348,7 @@
 		<key>2404AE08-D4CF-4265-B7BB-44043DD356DD</key>
 		<dict>
 			<key>colorindex</key>
-			<integer>6</integer>
+			<integer>9</integer>
 			<key>xpos</key>
 			<integer>430</integer>
 			<key>ypos</key>
@@ -311,7 +357,7 @@
 		<key>3580539C-16DC-4A45-A033-EA3E784FBFA4</key>
 		<dict>
 			<key>colorindex</key>
-			<integer>4</integer>
+			<integer>6</integer>
 			<key>xpos</key>
 			<integer>230</integer>
 			<key>ypos</key>
@@ -324,10 +370,19 @@
 			<key>ypos</key>
 			<integer>30</integer>
 		</dict>
+		<key>BB9DC8E1-82F4-424B-8018-E8E238BC349B</key>
+		<dict>
+			<key>colorindex</key>
+			<integer>8</integer>
+			<key>xpos</key>
+			<integer>230</integer>
+			<key>ypos</key>
+			<integer>470</integer>
+		</dict>
 		<key>D7398442-7E7D-4728-84FB-B55F1DB7F5C3</key>
 		<dict>
 			<key>colorindex</key>
-			<integer>3</integer>
+			<integer>7</integer>
 			<key>xpos</key>
 			<integer>230</integer>
 			<key>ypos</key>
