@@ -4,14 +4,9 @@
 require 'tmpdir'
 require 'optparse'
 require 'json'
-require 'cgi'
 require 'shellwords'
 require './emoji-db/utils.rb'
 require 'pathname'
-
-SPLITTER = '|'
-
-def putv(*_); end
 
 def codepoints_to_ruby(arr); arr.map(&:to_i).int_to_hex.map {|d| "\\u{#{d}}"}.join(''); end
 def codepoints_to_emoji(arr); arr.map(&:to_i).pack('U*'); end
@@ -25,37 +20,6 @@ OptionParser.new do |opts|
   opts.summary_indent = "  "
   opts.summary_width = 20
 
-  opts.on("-x", "--xml", "Output XML") do |o|
-    $output_xml = true
-  end
-
-  opts.on("--to-name [string]", "Extract emojilib name from specially-formatted string") do |cp|
-    print cp.split(SPLITTER)[0]
-    abort
-  end
-
-  opts.on("--to-key [string]", "Print emoji-db key") do |cp|
-    print cp.split(SPLITTER)[1]
-    STDERR.puts cp.split(SPLITTER)[1]
-    abort
-  end
-
-  opts.on("--to-path [string]", "Print path to emoji image") do |cp|
-    print cp.split(SPLITTER)[2]
-    STDERR.puts cp.split(SPLITTER)[2]
-    abort
-  end
-
-  opts.on("--to-unicode [string]", "Convert codepoints to emoji") do |cp|
-    print codepoints_to_emoji(cp.split(SPLITTER)[3..-1])
-    abort
-  end
-
-  opts.on("--to-ruby [string]", "Convert codepoints to ruby") do |cp|
-    print codepoints_to_ruby(cp.split(SPLITTER)[3..-1])
-    abort
-  end
-
   opts.on("-t", "--tone [1-5]", ['1','2','3','4','5'], "Include skin tone") do |t|
     $skin_tone = t.to_i
   end
@@ -64,38 +28,10 @@ OptionParser.new do |opts|
     STDERR.puts "Debug mode enabled"
     $debug_mode = true
   end
-
-  opts.on("-v", "--verbose", "(Pretty self-explanatory)") do |o|
-    def putv(*args); STDERR.puts args.map {|a| "#{a}".console_grey}.join("\n") + "\n"; end
-  end
 end.parse!(ARGV)
 
-def items2xml(results)
-  bits = results.map do |r|
-    <<-ITEM
-  <item
-    arg="#{r[:arg]}"
-    uid="#{r[:uid]}">
-    <title>#{r[:title]}</title>
-    <subtitle>#{r[:subtitle]}</subtitle>
-    <subtitle mod="alt">#{r[:subtitle_alt]}</subtitle>
-    <subtitle mod="ctrl">#{r[:subtitle_ctrl]}</subtitle>
-    <subtitle mod="shift">#{r[:subtitle_shift]}</subtitle>
-    <subtitle mod="cmd">#{r[:subtitle_cmd]}</subtitle>
-    <icon>#{r[:path]}</icon>
-  </item>
-    ITEM
-  end
-
-  <<-XML
-<?xml version='1.0'?>
-<items>
-#{bits.join("\n")}
-</items>
-  XML
-end
-
-EMOJI_DB_PATH = Pathname.new('./emoji-db/')
+PWD = Pathname.new File.expand_path(File.dirname(__FILE__))
+EMOJI_DB_PATH = PWD.join('./emoji-db/')
 MARSHAL_TMP_FILE = File.expand_path('./alfred-emoji-marshal-cache', Dir.tmpdir)
 
 EMOJIS = File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) do |f|
@@ -112,7 +48,7 @@ EMOJIS = File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) do |f|
     }
 
     fc['db'].each do |k, v|
-      fc['db'][k]['name'] = CGI.escapeHTML(fc['db'][k]['name'] || '')
+      fc['db'][k]['name'] = fc['db'][k]['name'] || ''
       fc['search_strings'][k] = [
         '',
         v['name'].split(/\s+/),
@@ -142,6 +78,7 @@ matches = []
 unless ARGV.empty?
   query = ARGV.join(' ').downcase.strip
   STDERR.puts "QUERY: `#{query}`"
+
   if query.strip != ''
     EMOJIS['search_strings'].each do |key, ss|
       if ss.include?(" #{query} ")
@@ -191,22 +128,44 @@ items = (exact_matches + matches).map do |emojilib_key|
     "NO NAME FOR EMOJI #{emojilib_key}"
   end
 
+  unicode_txt = codepoints_to_emoji(codepoints)
+  ruby_txt = codepoints_to_ruby(codepoints)
+
   {
-    :arg => "#{emojilib_name}#{SPLITTER}#{emojilib_key}#{SPLITTER}#{path}#{SPLITTER}#{codepoints.join(SPLITTER)}",
+    :arg => unicode_txt,
     :uid => emojilib_key,
-    :path => path,
+    :icon => {
+      :path => path,
+    },
+    # :type => 'file:skipcheck',
     :title => title,
-    :subtitle => "Copy #{codepoints_to_emoji(codepoints)} to clipboard",
-    :subtitle_alt => "Copy #{codepoints_to_ruby(codepoints)} to clipboard",
-    :subtitle_ctrl => "Copy #{emojilib_key} to clipboard",
-    :subtitle_shift => emoji['emojilib_name'] ? "Copy #{emojilib_name} to clipboard" : "No emojilib name :..(",
-    :subtitle_cmd => "Reveal image for #{codepoints_to_emoji(codepoints)} in Finder",
+    :quicklookurl => path,
+    :subtitle => "Copy #{unicode_txt} to clipboard",
+    :mods => {
+      :alt => {
+        :valid => true,
+        :arg => ruby_txt,
+        :subtitle => "Copy #{ruby_txt} to clipboard"
+      },
+      :ctrl => {
+        :valid => true,
+        :arg => emojilib_key,
+        :subtitle => "Copy #{emojilib_key} to clipboard"
+      },
+      :shift => {
+        :valid => !!emoji['emojilib_name'],
+        :arg => emoji['emojilib_name'],
+        :subtitle => emoji['emojilib_name'] ? "Copy #{emojilib_name} to clipboard" : "No emojilib name :..("
+      },
+      :cmd => {
+        :valid => true,
+        :arg => path,
+        :subtitle => "Reveal image for #{unicode_txt} in Finder"
+      }
+    }
   }
 end
 
-if $output_xml
-  STDERR.puts items2xml(items)
-  puts items2xml(items)
-else
-  puts JSON.pretty_generate(items)
-end
+puts JSON.pretty_generate({
+  :items => items,
+})

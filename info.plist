@@ -8,7 +8,7 @@
 	<string>Internet</string>
 	<key>connections</key>
 	<dict>
-		<key>0C6C91FC-C9ED-4145-A992-8703287638FF</key>
+		<key>16B5910C-8088-46BF-AE4E-EFA8187C4407</key>
 		<array>
 			<dict>
 				<key>destinationuid</key>
@@ -25,7 +25,7 @@
 		<array>
 			<dict>
 				<key>destinationuid</key>
-				<string>FF9EA938-154D-477C-BC62-7A3B2A7BC2F4</string>
+				<string>9006EDF2-1C48-490F-9E50-187D8E0384F6</string>
 				<key>modifiers</key>
 				<integer>1048576</integer>
 				<key>modifiersubtext</key>
@@ -35,9 +35,9 @@
 			</dict>
 			<dict>
 				<key>destinationuid</key>
-				<string>0C6C91FC-C9ED-4145-A992-8703287638FF</string>
+				<string>2404AE08-D4CF-4265-B7BB-44043DD356DD</string>
 				<key>modifiers</key>
-				<integer>524288</integer>
+				<integer>0</integer>
 				<key>modifiersubtext</key>
 				<string></string>
 				<key>vitoclose</key>
@@ -45,7 +45,7 @@
 			</dict>
 			<dict>
 				<key>destinationuid</key>
-				<string>3580539C-16DC-4A45-A033-EA3E784FBFA4</string>
+				<string>6684C3DA-026B-4B8D-ADCA-4514C8BEB053</string>
 				<key>modifiers</key>
 				<integer>131072</integer>
 				<key>modifiersubtext</key>
@@ -55,17 +55,7 @@
 			</dict>
 			<dict>
 				<key>destinationuid</key>
-				<string>D7398442-7E7D-4728-84FB-B55F1DB7F5C3</string>
-				<key>modifiers</key>
-				<integer>0</integer>
-				<key>modifiersubtext</key>
-				<string></string>
-				<key>vitoclose</key>
-				<false/>
-			</dict>
-			<dict>
-				<key>destinationuid</key>
-				<string>BB9DC8E1-82F4-424B-8018-E8E238BC349B</string>
+				<string>16B5910C-8088-46BF-AE4E-EFA8187C4407</string>
 				<key>modifiers</key>
 				<integer>262144</integer>
 				<key>modifiersubtext</key>
@@ -73,8 +63,18 @@
 				<key>vitoclose</key>
 				<false/>
 			</dict>
+			<dict>
+				<key>destinationuid</key>
+				<string>CEBAC27D-23A5-4336-96C5-A9B7F422663B</string>
+				<key>modifiers</key>
+				<integer>524288</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
 		</array>
-		<key>3580539C-16DC-4A45-A033-EA3E784FBFA4</key>
+		<key>6684C3DA-026B-4B8D-ADCA-4514C8BEB053</key>
 		<array>
 			<dict>
 				<key>destinationuid</key>
@@ -87,37 +87,11 @@
 				<false/>
 			</dict>
 		</array>
-		<key>BB9DC8E1-82F4-424B-8018-E8E238BC349B</key>
+		<key>CEBAC27D-23A5-4336-96C5-A9B7F422663B</key>
 		<array>
 			<dict>
 				<key>destinationuid</key>
 				<string>2404AE08-D4CF-4265-B7BB-44043DD356DD</string>
-				<key>modifiers</key>
-				<integer>0</integer>
-				<key>modifiersubtext</key>
-				<string></string>
-				<key>vitoclose</key>
-				<false/>
-			</dict>
-		</array>
-		<key>D7398442-7E7D-4728-84FB-B55F1DB7F5C3</key>
-		<array>
-			<dict>
-				<key>destinationuid</key>
-				<string>2404AE08-D4CF-4265-B7BB-44043DD356DD</string>
-				<key>modifiers</key>
-				<integer>0</integer>
-				<key>modifiersubtext</key>
-				<string></string>
-				<key>vitoclose</key>
-				<false/>
-			</dict>
-		</array>
-		<key>FF9EA938-154D-477C-BC62-7A3B2A7BC2F4</key>
-		<array>
-			<dict>
-				<key>destinationuid</key>
-				<string>9006EDF2-1C48-490F-9E50-187D8E0384F6</string>
 				<key>modifiers</key>
 				<integer>0</integer>
 				<key>modifiersubtext</key>
@@ -137,29 +111,6 @@
 	<string>Find Dat Emoji DEV</string>
 	<key>objects</key>
 	<array>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>concurrently</key>
-				<false/>
-				<key>escaping</key>
-				<integer>4</integer>
-				<key>script</key>
-				<string>ruby emoji.rb --to-path "{query}"</string>
-				<key>scriptargtype</key>
-				<integer>0</integer>
-				<key>scriptfile</key>
-				<string></string>
-				<key>type</key>
-				<integer>0</integer>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.action.script</string>
-			<key>uid</key>
-			<string>FF9EA938-154D-477C-BC62-7A3B2A7BC2F4</string>
-			<key>version</key>
-			<integer>2</integer>
-		</dict>
 		<dict>
 			<key>type</key>
 			<string>alfred.workflow.action.revealfile</string>
@@ -190,7 +141,7 @@
 				<key>runningsubtext</key>
 				<string>One moment please…</string>
 				<key>script</key>
-				<string>ruby emoji.rb -x {query}</string>
+				<string>ruby emoji.rb {query}</string>
 				<key>scriptargtype</key>
 				<integer>0</integer>
 				<key>scriptfile</key>
@@ -214,29 +165,6 @@
 		<dict>
 			<key>config</key>
 			<dict>
-				<key>concurrently</key>
-				<false/>
-				<key>escaping</key>
-				<integer>4</integer>
-				<key>script</key>
-				<string>ruby emoji.rb --to-ruby "{query}"</string>
-				<key>scriptargtype</key>
-				<integer>0</integer>
-				<key>scriptfile</key>
-				<string></string>
-				<key>type</key>
-				<integer>0</integer>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.action.script</string>
-			<key>uid</key>
-			<string>0C6C91FC-C9ED-4145-A992-8703287638FF</string>
-			<key>version</key>
-			<integer>2</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
 				<key>autopaste</key>
 				<false/>
 				<key>clipboardtext</key>
@@ -252,73 +180,28 @@
 			<integer>2</integer>
 		</dict>
 		<dict>
-			<key>config</key>
-			<dict>
-				<key>concurrently</key>
-				<false/>
-				<key>escaping</key>
-				<integer>4</integer>
-				<key>script</key>
-				<string>ruby emoji.rb --to-name "{query}"</string>
-				<key>scriptargtype</key>
-				<integer>0</integer>
-				<key>scriptfile</key>
-				<string></string>
-				<key>type</key>
-				<integer>0</integer>
-			</dict>
 			<key>type</key>
-			<string>alfred.workflow.action.script</string>
+			<string>alfred.workflow.utility.junction</string>
 			<key>uid</key>
-			<string>3580539C-16DC-4A45-A033-EA3E784FBFA4</string>
+			<string>6684C3DA-026B-4B8D-ADCA-4514C8BEB053</string>
 			<key>version</key>
-			<integer>2</integer>
+			<integer>1</integer>
 		</dict>
 		<dict>
-			<key>config</key>
-			<dict>
-				<key>concurrently</key>
-				<false/>
-				<key>escaping</key>
-				<integer>4</integer>
-				<key>script</key>
-				<string>ruby emoji.rb --to-unicode "{query}"</string>
-				<key>scriptargtype</key>
-				<integer>0</integer>
-				<key>scriptfile</key>
-				<string></string>
-				<key>type</key>
-				<integer>0</integer>
-			</dict>
 			<key>type</key>
-			<string>alfred.workflow.action.script</string>
+			<string>alfred.workflow.utility.junction</string>
 			<key>uid</key>
-			<string>D7398442-7E7D-4728-84FB-B55F1DB7F5C3</string>
+			<string>16B5910C-8088-46BF-AE4E-EFA8187C4407</string>
 			<key>version</key>
-			<integer>2</integer>
+			<integer>1</integer>
 		</dict>
 		<dict>
-			<key>config</key>
-			<dict>
-				<key>concurrently</key>
-				<false/>
-				<key>escaping</key>
-				<integer>4</integer>
-				<key>script</key>
-				<string>ruby emoji.rb --to-key "{query}"</string>
-				<key>scriptargtype</key>
-				<integer>0</integer>
-				<key>scriptfile</key>
-				<string></string>
-				<key>type</key>
-				<integer>0</integer>
-			</dict>
 			<key>type</key>
-			<string>alfred.workflow.action.script</string>
+			<string>alfred.workflow.utility.junction</string>
 			<key>uid</key>
-			<string>BB9DC8E1-82F4-424B-8018-E8E238BC349B</string>
+			<string>CEBAC27D-23A5-4336-96C5-A9B7F422663B</string>
 			<key>version</key>
-			<integer>2</integer>
+			<integer>1</integer>
 		</dict>
 	</array>
 	<key>readme</key>
@@ -327,19 +210,15 @@
 - Copy as Ruby by using -r</string>
 	<key>uidata</key>
 	<dict>
-		<key>0C6C91FC-C9ED-4145-A992-8703287638FF</key>
+		<key>16B5910C-8088-46BF-AE4E-EFA8187C4407</key>
 		<dict>
-			<key>colorindex</key>
-			<integer>5</integer>
 			<key>xpos</key>
-			<integer>230</integer>
+			<integer>310</integer>
 			<key>ypos</key>
-			<integer>140</integer>
+			<integer>280</integer>
 		</dict>
 		<key>18314CAD-E0C0-45FD-A21E-69F5D30C7DE5</key>
 		<dict>
-			<key>colorindex</key>
-			<integer>1</integer>
 			<key>xpos</key>
 			<integer>30</integer>
 			<key>ypos</key>
@@ -347,55 +226,31 @@
 		</dict>
 		<key>2404AE08-D4CF-4265-B7BB-44043DD356DD</key>
 		<dict>
-			<key>colorindex</key>
-			<integer>9</integer>
 			<key>xpos</key>
-			<integer>430</integer>
+			<integer>510</integer>
 			<key>ypos</key>
-			<integer>250</integer>
+			<integer>140</integer>
 		</dict>
-		<key>3580539C-16DC-4A45-A033-EA3E784FBFA4</key>
+		<key>6684C3DA-026B-4B8D-ADCA-4514C8BEB053</key>
 		<dict>
-			<key>colorindex</key>
-			<integer>6</integer>
 			<key>xpos</key>
-			<integer>230</integer>
+			<integer>310</integer>
 			<key>ypos</key>
-			<integer>250</integer>
+			<integer>220</integer>
 		</dict>
 		<key>9006EDF2-1C48-490F-9E50-187D8E0384F6</key>
 		<dict>
 			<key>xpos</key>
-			<integer>430</integer>
+			<integer>270</integer>
 			<key>ypos</key>
-			<integer>30</integer>
+			<integer>60</integer>
 		</dict>
-		<key>BB9DC8E1-82F4-424B-8018-E8E238BC349B</key>
+		<key>CEBAC27D-23A5-4336-96C5-A9B7F422663B</key>
 		<dict>
-			<key>colorindex</key>
-			<integer>8</integer>
 			<key>xpos</key>
-			<integer>230</integer>
+			<integer>310</integer>
 			<key>ypos</key>
-			<integer>470</integer>
-		</dict>
-		<key>D7398442-7E7D-4728-84FB-B55F1DB7F5C3</key>
-		<dict>
-			<key>colorindex</key>
-			<integer>7</integer>
-			<key>xpos</key>
-			<integer>230</integer>
-			<key>ypos</key>
-			<integer>360</integer>
-		</dict>
-		<key>FF9EA938-154D-477C-BC62-7A3B2A7BC2F4</key>
-		<dict>
-			<key>colorindex</key>
-			<integer>4</integer>
-			<key>xpos</key>
-			<integer>230</integer>
-			<key>ypos</key>
-			<integer>30</integer>
+			<integer>340</integer>
 		</dict>
 	</dict>
 	<key>webaddress</key>
