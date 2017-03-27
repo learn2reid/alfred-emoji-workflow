@@ -79,7 +79,10 @@ unless ARGV.empty?
   query = ARGV.join(' ').downcase.strip
   STDERR.puts "QUERY: `#{query}`"
 
-  if query.strip != ''
+  if query.strip == ''
+    # show everything if no query is provided
+    matches = EMOJIS['db'].keys
+  else
     EMOJIS['search_strings'].each do |key, ss|
       if ss.include?(" #{query} ")
         exact_matches.push key
