@@ -11,9 +11,15 @@ require 'pathname'
 def codepoints_to_ruby(arr); arr.map(&:to_i).int_to_hex.map {|d| "\\u{#{d}}"}.join(''); end
 def codepoints_to_emoji(arr); arr.map(&:to_i).pack('U*'); end
 
+PWD = Pathname.new File.expand_path(File.dirname(__FILE__))
+EMOJI_DB_PATH = PWD.join('./emoji-db/')
+MARSHAL_TMP_FILE = File.expand_path('./alfred-emoji-marshal-cache', Dir.tmpdir)
+
 STDERR.puts '===='
 STDERR.puts "ARGV: `#{ARGV}`"
 STDERR.puts '===='
+
+option_array = ARGV.join(' ').split
 
 OptionParser.new do |opts|
   opts.program_name = File.basename(__FILE__)
@@ -24,24 +30,14 @@ OptionParser.new do |opts|
     $skin_tone = t.to_i
   end
 
-  opts.on("-d", "--debug", "Run in debug mode (no cache)") do |o|
+  opts.on("-d", "--debug", "Run in debug mode (no cache)") do |_o|
     STDERR.puts "Debug mode enabled"
     $debug_mode = true
   end
-end.parse!(ARGV)
+end.parse!(option_array)
 
-PWD = Pathname.new File.expand_path(File.dirname(__FILE__))
-EMOJI_DB_PATH = PWD.join('./emoji-db/')
-MARSHAL_TMP_FILE = File.expand_path('./alfred-emoji-marshal-cache', Dir.tmpdir)
-
-EMOJIS = File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) do |f|
-  begin
-    raise if $debug_mode
-    guts = Marshal.load(f.read)
-    STDERR.puts "LOADING FROM MARSHAL: `#{MARSHAL_TMP_FILE}`"
-    guts
-  rescue
-    STDERR.puts "LOADING FROM EMOJI-DB"
+if $debug_mode
+  File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) do |f|
     fc = {
       'search_strings' => {},
       'db' => JSON.load(IO.read(EMOJI_DB_PATH.join('emoji-db.json')))
@@ -51,13 +47,19 @@ EMOJIS = File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) do |f|
       fc['db'][k]['name'] = fc['db'][k]['name'] || ''
       fc['search_strings'][k] = [
         '',
-        v['name'].split(/\s+/),
+        (v['name'] || '').split,
         v['keywords'],
         v['codepoints'].map(&:to_unicode),
         fc['db'][k]['fitz'] ? 'fitz' : [],
         '',
       ].compact.join(' ').downcase
-      fc['db'][k]['image'] = EMOJI_DB_PATH.join(fc['db'][k]['image'])
+
+      if fc['db'][k]['image']
+        fc['db'][k]['image'] = EMOJI_DB_PATH.join(fc['db'][k]['image'])
+      else
+        STDERR.puts "Emoji #{k} is missing an image"
+      end
+
       if fc['db'][k]['fitz']
         fc['db'][k]['fitz'].map! {|p| EMOJI_DB_PATH.join(p)}
       end
@@ -66,30 +68,43 @@ EMOJIS = File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) do |f|
     f.write(Marshal.dump(fc))
     f.flush
     f.truncate(f.pos)
-    fc
   end
+
+  puts JSON.pretty_generate({
+    :items => [
+      {
+        # :arg => unicode_txt,
+        :uid => '__debug__',
+        :title => "Debug \u{1f41b}",
+        :subtitle => "Emoji database has been reset",
+      }
+    ],
+  })
+  exit 0
 end
+
+EMOJI_OBJ = File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) {|f| Marshal.load(f.read)}
 
 ### SEARCH SHIT
 
 exact_matches = []
 matches = []
 
-unless ARGV.empty?
-  query = ARGV.join(' ').downcase.strip
+unless option_array.empty?
+  query = option_array.join(' ').downcase.strip
   STDERR.puts "QUERY: `#{query}`"
 
   if query.strip == ''
     # show everything if no query is provided
-    matches = EMOJIS['db'].keys
+    matches = EMOJI_OBJ['db'].keys
   else
-    EMOJIS['search_strings'].each do |key, ss|
+    EMOJI_OBJ['search_strings'].each do |key, ss|
       if ss.include?(" #{query} ")
         exact_matches.push key
-        STDERR.puts "`#{EMOJIS['db'][key]['name']}` is an exact match!"
+        STDERR.puts "`#{EMOJI_OBJ['db'][key]['name']}` is an exact match!"
       elsif ss.include?(query)
         matches.push key
-        STDERR.puts "`#{EMOJIS['db'][key]['name']}` is a match!"
+        STDERR.puts "`#{EMOJI_OBJ['db'][key]['name']}` is a match!"
       end
     end
   end
@@ -97,7 +112,7 @@ end
 
 items = (exact_matches + matches).map do |emojilib_key|
   STDERR.puts "CODEPOINT: `#{emojilib_key}`"
-  emoji = EMOJIS['db'][emojilib_key]
+  emoji = EMOJI_OBJ['db'][emojilib_key]
 
   path = emoji['image']
   codepoints = [emoji['codepoints']]
@@ -115,21 +130,12 @@ items = (exact_matches + matches).map do |emojilib_key|
 
   path = emoji['fitz'][$skin_tone - 1] if fitz
 
-  STDERR.puts "KEYWORDS: `#{EMOJIS['search_strings'][emojilib_key]}`"
+  STDERR.puts "KEYWORDS: `#{EMOJI_OBJ['search_strings'][emojilib_key]}`"
   STDERR.puts path
 
-  codepoints = [
-    *emoji['codepoints'],
-    fitz,
-  ].compact
+  codepoints = [*emoji['codepoints'], fitz].compact
 
   emojilib_name = emoji['emojilib_name'] ? ":#{emoji['emojilib_name']}:" : ''
-
-  title = if emoji['name'] && emoji['name'].strip != ''
-    emoji['name']
-  else
-    "NO NAME FOR EMOJI #{emojilib_key}"
-  end
 
   unicode_txt = codepoints_to_emoji(codepoints)
   ruby_txt = codepoints_to_ruby(codepoints)
@@ -141,7 +147,7 @@ items = (exact_matches + matches).map do |emojilib_key|
       :path => path,
     },
     # :type => 'file:skipcheck',
-    :title => title,
+    :title => emoji['name'],
     :quicklookurl => path,
     :subtitle => "Copy #{unicode_txt} to clipboard",
     :mods => {
