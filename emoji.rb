@@ -5,11 +5,27 @@ require 'tmpdir'
 require 'optparse'
 require 'json'
 require 'shellwords'
-require './emoji-db/utils.rb'
 require 'pathname'
 
-def codepoints_to_ruby(arr); arr.map(&:to_i).int_to_hex.map {|d| "\\u{#{d}}"}.join(''); end
-def codepoints_to_emoji(arr); arr.map(&:to_i).pack('U*'); end
+class Integer
+  def to_unicode
+    self.to_s(16).rjust(4, '0')
+  end
+end
+
+class Array
+  def to_ruby
+    self.map(&:to_i).int_to_hex.map {|d| "\\u{#{d}}"}.join('')
+  end
+
+  def int_to_hex
+    self.map {|item| item.is_a?(Numeric) ? item.to_unicode : item.to_s}
+  end
+
+  def to_emoji
+    self.map(&:to_i).pack('U*')
+  end
+end
 
 PWD = Pathname.new File.expand_path(File.dirname(__FILE__))
 EMOJI_DB_PATH = PWD.join('./emoji-db/')
@@ -137,8 +153,8 @@ items = (exact_matches + matches).map do |emojilib_key|
 
   emojilib_name = emoji['emojilib_name'] ? ":#{emoji['emojilib_name']}:" : ''
 
-  unicode_txt = codepoints_to_emoji(codepoints)
-  ruby_txt = codepoints_to_ruby(codepoints)
+  unicode_txt = codepoints.to_emoji
+  ruby_txt = codepoints.to_ruby
 
   {
     :arg => unicode_txt,
