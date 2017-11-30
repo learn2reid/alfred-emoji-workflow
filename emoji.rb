@@ -52,7 +52,7 @@ OptionParser.new do |opts|
   end
 end.parse!(option_array)
 
-if $debug_mode
+def reset_marshal_cache
   File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) do |f|
     fc = {
       'search_strings' => {},
@@ -84,8 +84,13 @@ if $debug_mode
     f.write(Marshal.dump(fc))
     f.flush
     f.truncate(f.pos)
+    fc
   end
+end
 
+if $debug_mode
+  reset_marshal_cache
+  STDERR.puts "Marshal cache reset!"
   puts JSON.pretty_generate({
     :items => [
       {
@@ -99,7 +104,12 @@ if $debug_mode
   exit 0
 end
 
-EMOJI_OBJ = File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) {|f| Marshal.load(f.read)}
+EMOJI_OBJ = begin
+  File.open(MARSHAL_TMP_FILE, File::RDWR|File::CREAT, 0644) {|f| Marshal.load(f.read)}
+rescue ArgumentError
+  STDERR.puts "Marshal cache could not be loaded. Resetting!"
+  reset_marshal_cache
+end
 
 ### SEARCH SHIT
 
