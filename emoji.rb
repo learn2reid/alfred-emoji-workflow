@@ -23,7 +23,7 @@ class Array
   end
 
   def to_emoji
-    self.map(&:to_i).pack('U*')
+    self.map(&:to_i).pack('U*') + "\ufe0f"
   end
 end
 
