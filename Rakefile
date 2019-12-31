@@ -16,7 +16,7 @@ task :default do
     'emoji.rb',
     'icon.png',
     'emoji-db/emoji-db.json',
-    'emoji-db/emoji-img/',
+    'emoji-db/images/',
   ].each do |f|
     dir_name = File.dirname(f)
     mkdir_p(DestDir.join dir_name) if dir_name != '.'

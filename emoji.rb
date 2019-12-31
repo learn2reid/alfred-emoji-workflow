@@ -14,22 +14,14 @@ class Integer
 end
 
 class Array
-  def to_ruby
-    self.map(&:to_i).int_to_hex.map {|d| "\\u{#{d}}"}.join('')
-  end
-
-  def int_to_hex
-    self.map {|item| item.is_a?(Numeric) ? item.to_unicode : item.to_s}
-  end
-
-  def to_emoji
-    self.map(&:to_i).pack('U*') + "\ufe0f"
+  def to_codepoint_string
+    self.map {|item| item.is_a?(Numeric) ? '0x' + item.to_unicode : item.to_s}.join(', ')
   end
 end
 
 PWD = Pathname.new File.expand_path(File.dirname(__FILE__))
 EMOJI_DB_PATH = PWD.join('./emoji-db/')
-MARSHAL_TMP_FILE = File.expand_path('./alfred-emoji-marshal-cache', Dir.tmpdir)
+MARSHAL_TMP_FILE = File.expand_path('./alfred-emoji-workflow-cache', Dir.tmpdir)
 
 STDERR.puts '===='
 STDERR.puts "ARGV: `#{ARGV}`"
@@ -42,8 +34,12 @@ OptionParser.new do |opts|
   opts.summary_indent = "  "
   opts.summary_width = 20
 
-  opts.on("-t", "--tone [1-5]", ['1','2','3','4','5'], "Include skin tone") do |t|
-    $skin_tone = t.to_i
+  opts.on("-t", "--tone [number]", /^\d+$/, "Include skin tone") do |t|
+    if t.to_i % 11 == 0
+      $skin_tone = (t.to_i / 11).to_s
+    else
+      $skin_tone = t
+    end
   end
 
   opts.on("-d", "--debug", "Run in debug mode (no cache)") do |_o|
@@ -60,6 +56,8 @@ def reset_marshal_cache
     }
 
     fc['db'].each do |k, v|
+      puts [k, v]
+
       fc['db'][k]['name'] = fc['db'][k]['name'] || ''
       fc['search_strings'][k] = [
         '',
@@ -77,7 +75,9 @@ def reset_marshal_cache
       end
 
       if fc['db'][k]['fitz']
-        fc['db'][k]['fitz'].map! {|p| EMOJI_DB_PATH.join(p)}
+        fc['db'][k]['fitz'].each do |k, v|
+          v.merge!({ 'image' => EMOJI_DB_PATH.join(v['image']) })
+        end
       end
     end
     f.rewind
@@ -94,7 +94,6 @@ if $debug_mode
   puts JSON.pretty_generate({
     :items => [
       {
-        # :arg => unicode_txt,
         :uid => '__debug__',
         :title => "Debug \u{1f41b}",
         :subtitle => "Emoji database has been reset",
@@ -136,68 +135,73 @@ unless option_array.empty?
   end
 end
 
-items = (exact_matches + matches).map do |emojilib_key|
-  STDERR.puts "CODEPOINT: `#{emojilib_key}`"
-  emoji = EMOJI_OBJ['db'][emojilib_key]
+STDERR.puts JSON.pretty_generate(ENV.to_h)
 
-  path = emoji['image']
-  codepoints = [emoji['codepoints']]
+items = (exact_matches + matches).map do |emoji_key|
+  STDERR.puts "CODEPOINT: `#{emoji_key}`"
+  emoji = EMOJI_OBJ['db'][emoji_key]
 
-  fitz = if $skin_tone && emoji['fitz']
-    [
-      nil,
-      0x1f3fb,
-      0x1f3fc,
-      0x1f3fd,
-      0x1f3fe,
-      0x1f3ff,
-    ][$skin_tone]
+  if $skin_tone && emoji['fitz'] && emoji['fitz'][$skin_tone]
+    emoji = emoji['fitz'][$skin_tone]
   end
 
-  path = emoji['fitz'][$skin_tone - 1] if fitz
+  path = emoji['image']
+  codepoints = emoji['codepoints']
 
-  STDERR.puts "KEYWORDS: `#{EMOJI_OBJ['search_strings'][emojilib_key]}`"
+  STDERR.puts "KEYWORDS: `#{EMOJI_OBJ['search_strings'][emoji_key]}`"
   STDERR.puts path
 
-  codepoints = [*emoji['codepoints'], fitz].compact
 
   emojilib_name = emoji['emojilib_name'] ? ":#{emoji['emojilib_name']}:" : ''
 
-  unicode_txt = codepoints.to_emoji
-  ruby_txt = codepoints.to_ruby
+  unicode_txt = codepoints.pack('U*')
+  codepoint_txt = codepoints.to_codepoint_string
+
+  subtitle = "Copy #{unicode_txt} to clipboard"
+  mods = {
+    :ctrl => {
+      :valid => true,
+      :arg => emoji_key,
+      :subtitle => "Copy #{emoji_key} to clipboard",
+      :variables => {
+        :active_key => 'ctrl'
+      },
+    },
+    :shift => {
+      :valid => !!emoji['emojilib_name'],
+      :arg => emoji['emojilib_name'],
+      :subtitle => emoji['emojilib_name'] ? "Copy #{emojilib_name} to clipboard" : "No emojilib name :..(",
+      :variables => {
+        :active_key => 'shift'
+      },
+    },
+    :alt => {
+      :valid => true,
+      :arg => codepoint_txt,
+      :subtitle => "Copy '#{codepoint_txt}' to clipboard",
+    },
+    :cmd => {
+      :valid => true,
+      :arg => path,
+      :subtitle => "Reveal image for #{unicode_txt} in Finder",
+      :variables => {
+        :active_key => 'cmd'
+      },
+    },
+  }
 
   {
     :arg => unicode_txt,
-    :uid => emojilib_key,
+    :uid => emoji_key,
+    :variables => {},
     :icon => {
       :path => path,
     },
     # :type => 'file:skipcheck',
     :title => emoji['name'],
     :quicklookurl => path,
-    :subtitle => "Copy #{unicode_txt} to clipboard",
-    :mods => {
-      :alt => {
-        :valid => true,
-        :arg => ruby_txt,
-        :subtitle => "Copy #{ruby_txt} to clipboard"
-      },
-      :ctrl => {
-        :valid => true,
-        :arg => emojilib_key,
-        :subtitle => "Copy #{emojilib_key} to clipboard"
-      },
-      :shift => {
-        :valid => !!emoji['emojilib_name'],
-        :arg => emoji['emojilib_name'],
-        :subtitle => emoji['emojilib_name'] ? "Copy #{emojilib_name} to clipboard" : "No emojilib name :..("
-      },
-      :cmd => {
-        :valid => true,
-        :arg => path,
-        :subtitle => "Reveal image for #{unicode_txt} in Finder"
-      }
-    }
+    :subtitle => subtitle,
+    :mods => mods,
   }
 end
 
